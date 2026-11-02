@@ -1,0 +1,49 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: case-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/sentinel_case_db
+    username: sentinel
+    password: rootAdmin
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: sentinel-case-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+      max-poll-records: 10
+
+    listener:
+      ack-mode: manual
+
+sentinel:
+  kafka:
+    topics:
+      report-created: sentinel.report.created
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
