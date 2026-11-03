@@ -53,6 +53,10 @@ public class ModerationCase {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     protected ModerationCase() {
         // Required by JPA
     }
@@ -114,6 +118,8 @@ public class ModerationCase {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public Long getVersion() { return version; }
 
     public void updateStatus(CaseStatus newStatus) {
         if (newStatus == null) {

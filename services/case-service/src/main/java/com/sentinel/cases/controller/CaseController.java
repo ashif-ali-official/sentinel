@@ -2,6 +2,7 @@ package com.sentinel.cases.controller;
 
 import com.sentinel.cases.dto.request.UpdateCasePriorityRequest;
 import com.sentinel.cases.dto.request.UpdateCaseStatusRequest;
+import com.sentinel.cases.dto.response.CaseAuditResponse;
 import com.sentinel.cases.dto.response.CaseResponse;
 import com.sentinel.cases.dto.response.PageResponse;
 import com.sentinel.cases.enums.CasePriority;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/cases")
@@ -51,7 +54,7 @@ public class CaseController {
             @Valid @RequestBody UpdateCaseStatusRequest request) {
 
         return ResponseEntity.ok(
-                caseService.updateStatus(caseId, request.status())
+                caseService.updateStatus(caseId, request.status(), request.version(), request.performedBy())
         );
     }
 
@@ -61,7 +64,16 @@ public class CaseController {
             @Valid @RequestBody UpdateCasePriorityRequest request) {
 
         return ResponseEntity.ok(
-                caseService.updatePriority(caseId, request.priority())
+                caseService.updatePriority(caseId, request.priority(), request.version(), request.performedBy())
+        );
+    }
+
+    @GetMapping("/{caseId}/audit")
+    public ResponseEntity<List<CaseAuditResponse>> getAuditHistory(
+            @PathVariable String caseId) {
+
+        return ResponseEntity.ok(
+                caseService.getAuditHistory(caseId)
         );
     }
 

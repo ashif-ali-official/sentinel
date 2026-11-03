@@ -16,6 +16,7 @@ public record CaseResponse(
         CaseStatus status,
         CasePriority priority,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        Long version
 ) {
 }
