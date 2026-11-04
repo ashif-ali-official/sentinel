@@ -12,6 +12,11 @@ import java.time.Duration;
 public class PlayerClientConfig {
 
     @Bean
+    public RestClient.Builder playerRestClientBuilder() {
+        return RestClient.builder();
+    }
+
+    @Bean
     public RestClient playerRestClient(RestClient.Builder builder,
                                        @Value("${sentinel.services.player.base-url}") String baseUrl) {
 
