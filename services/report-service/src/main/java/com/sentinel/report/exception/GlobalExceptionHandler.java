@@ -1,6 +1,7 @@
 package com.sentinel.report.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,22 @@ public class GlobalExceptionHandler {
                 "error", "Not Found",
                 "message", exception.getMessage()
         );
+    }
+
+    @ExceptionHandler(InvalidPlayerException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidPlayer(
+            InvalidPlayerException exception
+    ) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", exception.getMessage()));
+    }
+
+    @ExceptionHandler(PlayerServiceUnavailableException.class)
+    public ResponseEntity<Map<String, String>> handlePlayerServiceUnavailable(
+            PlayerServiceUnavailableException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("error", exception.getMessage()));
     }
 
 }

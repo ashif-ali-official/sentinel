@@ -33,4 +33,41 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info, metrics, circuitbreakers
+
+  endpoint:
+    health:
+      show-details: always
+
+  health:
+    circuitbreakers:
+      enabled: true
+
+sentinel:
+  services:
+    player:
+      base-url: http://localhost:8084
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      playerService:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+      playerService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - com.sentinel.report.exception.PlayerServiceUnavailableException

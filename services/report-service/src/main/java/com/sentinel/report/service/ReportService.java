@@ -1,5 +1,6 @@
 package com.sentinel.report.service;
 
+import com.sentinel.report.client.PlayerClient;
 import com.sentinel.report.dto.request.CreateReportRequest;
 import com.sentinel.report.dto.response.PageResponse;
 import com.sentinel.report.dto.response.ReportResponse;
@@ -7,10 +8,12 @@ import com.sentinel.report.entity.Report;
 import com.sentinel.report.enums.ReportCategory;
 import com.sentinel.report.enums.ReportStatus;
 import com.sentinel.report.event.ReportCreatedEvent;
+import com.sentinel.report.exception.InvalidPlayerException;
 import com.sentinel.report.exception.ReportNotFoundException;
 import com.sentinel.report.repository.OutboxRepository;
 import com.sentinel.report.repository.ReportRepository;
 import com.sentinel.report.repository.ReportSpecification;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -22,15 +25,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ReportService {
 
     private final ReportRepository reportRepository;
     private final OutboxService outboxService;
-
-    public ReportService(ReportRepository reportRepository, OutboxService outboxService) {
-        this.reportRepository = reportRepository;
-        this.outboxService = outboxService;
-    }
+    private final PlayerClient playerClient;
 
     @Transactional
     public ReportResponse createReport(CreateReportRequest request) {
@@ -41,6 +41,18 @@ public class ReportService {
                 request.category(),
                 request.description()
         );
+
+        if (!playerClient.playerExists(request.reporterId())) {
+            throw new InvalidPlayerException(
+                    "Reporter does not exist"
+            );
+        }
+
+        if (!playerClient.playerExists(request.reportedPlayerId())) {
+            throw new InvalidPlayerException(
+                    "Reported player does not exist"
+            );
+        }
 
         Report savedReport = reportRepository.save(report);
 
