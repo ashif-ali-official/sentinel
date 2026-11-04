@@ -35,6 +35,11 @@ spring:
 
       max-poll-records: 10
 
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+
     listener:
       ack-mode: manual
 
@@ -42,6 +47,7 @@ sentinel:
   kafka:
     topics:
       report-created: sentinel.report.created
+      case-created: sentinel.case.created
 
 management:
   endpoints:

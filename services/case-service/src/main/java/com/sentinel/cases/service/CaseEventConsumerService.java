@@ -18,6 +18,7 @@ public class CaseEventConsumerService {
 
     private final CaseRepository caseRepository;
     private final ProcessedEventRepository processedEventRepository;
+    private final CaseOutboxService caseOutboxService;
 
     @Transactional
     public void processReportCreated(ReportCreatedEvent reportCreatedEvent) {
@@ -39,7 +40,7 @@ public class CaseEventConsumerService {
                 category
         );
 
-        caseRepository.save(moderationCase);
+        ModerationCase savedCase = caseRepository.save(moderationCase);
 
         ProcessedEvent processedEvent = new ProcessedEvent(
             reportCreatedEvent.eventId(),
@@ -50,6 +51,13 @@ public class CaseEventConsumerService {
         processedEventRepository.save(processedEvent);
         log.info(
                 "Moderation case created. Case ID: {}, Report ID: {}",
+                moderationCase.getId(),
+                moderationCase.getReportId()
+        );
+
+        caseOutboxService.publishCaseCreated(moderationCase);
+        log.info(
+                "Moderation case sent to CaseOutbox. Case ID: {}, Report ID: {}",
                 moderationCase.getId(),
                 moderationCase.getReportId()
         );
