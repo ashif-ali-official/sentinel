@@ -48,6 +48,7 @@ sentinel:
     topics:
       report-created: sentinel.report.created
       case-created: sentinel.case.created
+      case-assigned: sentinel.case.assigned
 
 management:
   endpoints:

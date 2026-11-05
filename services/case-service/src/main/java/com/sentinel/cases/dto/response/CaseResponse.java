@@ -14,6 +14,7 @@ public record CaseResponse(
         String description,
         ReportCategory category,
         CaseStatus status,
+        String assignedModeratorId,
         CasePriority priority,
         Instant createdAt,
         Instant updatedAt,

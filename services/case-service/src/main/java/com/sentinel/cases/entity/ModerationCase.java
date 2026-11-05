@@ -43,6 +43,9 @@ public class ModerationCase {
     @Column(nullable = false, length = 30)
     private CaseStatus status;
 
+    @Column(name = "assigned_moderator_id", length = 100)
+    private String assignedModeratorId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private CasePriority priority;
@@ -107,6 +110,10 @@ public class ModerationCase {
         return status;
     }
 
+    public String getAssignedModeratorId() {
+        return assignedModeratorId;
+    }
+
     public CasePriority getPriority() {
         return priority;
     }
@@ -134,6 +141,22 @@ public class ModerationCase {
         }
 
         this.status = newStatus;
+        this.updatedAt = Instant.now();
+    }
+
+    public void assignTo(String moderatorId) {
+        if (moderatorId == null || moderatorId.isBlank()) {
+            throw new IllegalArgumentException("Moderator ID cannot be blank");
+        }
+        if (this.status == CaseStatus.ASSIGNED && moderatorId.equals(this.assignedModeratorId)) {
+            return;
+        }
+        if (this.status != CaseStatus.OPEN) {
+            throw new IllegalStateException("Cannot assign case in status: " + this.status);
+        }
+
+        this.assignedModeratorId = moderatorId;
+        this.status = CaseStatus.ASSIGNED;
         this.updatedAt = Instant.now();
     }
 

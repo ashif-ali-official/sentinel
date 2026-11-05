@@ -33,6 +33,20 @@ public class AssignmentService {
     @Transactional
     public AssignmentResponse assignCase(CreateAssignmentRequest request) {
 
+        CaseAssignment saved = createAssignment(request);
+
+        return new AssignmentResponse(
+                saved.getId(),
+                saved.getCaseId(),
+                saved.getModeratorId(),
+                saved.getStatus(),
+                saved.getAssignedAt()
+        );
+    }
+
+    @Transactional
+    public CaseAssignment createAssignment(CreateAssignmentRequest request) {
+
         if (assignmentRepository.existsByCaseId(request.caseId())) {
             throw new IllegalStateException(
                     "Case is already assigned: " + request.caseId()
@@ -61,14 +75,7 @@ public class AssignmentService {
         assignment.setStatus(AssignmentStatus.ASSIGNED);
         assignment.setAssignedAt(LocalDateTime.now());
 
-        CaseAssignment saved = assignmentRepository.save(assignment);
-
-        return new AssignmentResponse(
-                saved.getId(),
-                saved.getCaseId(),
-                saved.getModeratorId(),
-                saved.getStatus(),
-                saved.getAssignedAt()
-        );
+        return assignmentRepository.save(assignment);
     }
+
 }

@@ -174,6 +174,7 @@ public class CaseService {
                 entity.getDescription(),
                 entity.getCategory(),
                 entity.getStatus(),
+                entity.getAssignedModeratorId(),
                 entity.getPriority(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),

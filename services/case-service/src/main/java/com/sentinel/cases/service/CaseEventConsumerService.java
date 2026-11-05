@@ -1,6 +1,7 @@
 package com.sentinel.cases.service;
 
 import com.sentinel.cases.dto.event.ReportCreatedEvent;
+import com.sentinel.cases.dto.event.CaseAssignedEvent;
 import com.sentinel.cases.entity.ModerationCase;
 import com.sentinel.cases.entity.ProcessedEvent;
 import com.sentinel.cases.enums.ReportCategory;
@@ -19,6 +20,7 @@ public class CaseEventConsumerService {
     private final CaseRepository caseRepository;
     private final ProcessedEventRepository processedEventRepository;
     private final CaseOutboxService caseOutboxService;
+    private final CaseAuditService caseAuditService;
 
     @Transactional
     public void processReportCreated(ReportCreatedEvent reportCreatedEvent) {
@@ -62,6 +64,59 @@ public class CaseEventConsumerService {
                 moderationCase.getReportId()
         );
 
+    }
+
+    @Transactional
+    public void processCaseAssigned(CaseAssignedEvent event) {
+        validateCaseAssignedEvent(event);
+
+        if (processedEventRepository.existsById(event.eventId())) {
+            log.info("Duplicate event, ignored: {}", event.eventId());
+            return;
+        }
+
+        CaseAssignedEvent.CaseAssignedPayload payload = event.payload();
+        if (!"ASSIGNED".equals(payload.status())) {
+            throw new IllegalArgumentException("Unsupported assignment status: " + payload.status());
+        }
+        if (event.aggregateId() != null && !event.aggregateId().equals(payload.caseId())) {
+            throw new IllegalArgumentException("CaseAssigned aggregate ID does not match payload case ID");
+        }
+
+        ModerationCase moderationCase = caseRepository.findById(payload.caseId())
+                .orElseThrow(() -> new IllegalArgumentException("Case not found: " + payload.caseId()));
+        String previousModeratorId = moderationCase.getAssignedModeratorId();
+        moderationCase.assignTo(payload.moderatorId());
+
+        caseAuditService.record(
+                moderationCase.getId(),
+                "CASE_ASSIGNED",
+                previousModeratorId,
+                payload.moderatorId(),
+                event.producer() == null ? "assignment-service" : event.producer()
+        );
+        processedEventRepository.save(new ProcessedEvent(
+                event.eventId(),
+                event.eventType(),
+                moderationCase.getId()
+        ));
+        log.info("Case {} assigned to moderator {}", moderationCase.getId(), payload.moderatorId());
+    }
+
+    private void validateCaseAssignedEvent(CaseAssignedEvent event) {
+        if (event == null || event.eventId() == null || event.eventType() == null || event.payload() == null) {
+            throw new IllegalArgumentException("Invalid CaseAssigned event");
+        }
+        if (!"CASE_ASSIGNED".equals(event.eventType())) {
+            throw new IllegalArgumentException("Unsupported event type: " + event.eventType());
+        }
+        if (event.eventVersion() == null || event.eventVersion() != 1) {
+            throw new IllegalArgumentException("Unsupported CaseAssigned event version: " + event.eventVersion());
+        }
+        CaseAssignedEvent.CaseAssignedPayload payload = event.payload();
+        if (payload.caseId() == null || payload.moderatorId() == null || payload.assignmentId() == null) {
+            throw new IllegalArgumentException("CaseAssigned event contains incomplete payload");
+        }
     }
 
     private void validateEvent(ReportCreatedEvent reportCreatedEvent) {

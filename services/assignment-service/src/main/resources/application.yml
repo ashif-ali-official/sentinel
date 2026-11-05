@@ -32,6 +32,15 @@ spring:
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
 
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+
+
     listener:
       ack-mode: record
 
@@ -42,6 +51,11 @@ management:
         include: health,info,metrics
 
 sentinel:
+  outbox:
+    publish-delay: 2000
+    batch-size: 20
+    max-attempts: 5
+
   services:
     player:
       base-url: http://localhost:8084
