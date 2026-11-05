@@ -9,6 +9,7 @@ import com.sentinel.report.service.ReportService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class ReportController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN', 'PLAYER')")
     public ReportResponse createReport(
             @Valid @RequestBody CreateReportRequest request
     ) {
@@ -34,11 +36,13 @@ public class ReportController {
 
     @GetMapping("/{reportId}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN', 'PLAYER')")
     public ReportResponse getReport( @PathVariable String reportId) {
         return reportService.getReportById(reportId);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN')")
     public PageResponse<ReportResponse> getReports(
 
             @RequestParam(required = false)

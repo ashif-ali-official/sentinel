@@ -36,6 +36,10 @@ spring:
       ack-mode: record
 
 sentinel:
+  security:
+    cognito:
+      issuer-uri: ${COGNITO_ISSUER_URI:https://cognito-idp.ap-south-2.amazonaws.com/ap-south-2_ubJidtLKC}
+      client-id: ${COGNITO_CLIENT_ID:54bk5r8of48un0ke77r2pk29i5}
   kafka:
     topics:
       case-created: sentinel.case.created

@@ -4,6 +4,7 @@ import com.sentinel.moderation.dto.ModerationWorkItemResponse;
 import com.sentinel.moderation.dto.RecordDecisionRequest;
 import com.sentinel.moderation.service.ModerationWorkService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 
 import java.util.List;
 
+@PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN')")
 @RestController
 @RequestMapping("/api/v1/moderation/cases")
 @RequiredArgsConstructor

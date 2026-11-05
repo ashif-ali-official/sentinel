@@ -7,9 +7,11 @@ import com.sentinel.assignment.service.AssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+@PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN')")
 @RestController
 @RequestMapping("/api/v1/assignments")
 @RequiredArgsConstructor
