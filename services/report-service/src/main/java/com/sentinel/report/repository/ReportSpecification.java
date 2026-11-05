@@ -11,7 +11,8 @@ public class ReportSpecification {
     }
 
     public static Specification<Report> hasStatus(ReportStatus status) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("status"), status);
+        return (root, query, criteriaBuilder) ->
+                status == null ? null : criteriaBuilder.equal(root.get("status"), status);
     }
 
     public static Specification<Report> hasCategory(ReportCategory category) {

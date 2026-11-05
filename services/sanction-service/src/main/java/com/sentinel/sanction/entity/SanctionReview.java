@@ -36,6 +36,10 @@ public class SanctionReview {
     private Instant decidedAt;
     @Column(name = "actioned_at")
     private Instant actionedAt;
+    @Column(name = "reversed_at")
+    private Instant reversedAt;
+    @Column(name = "reversal_reason", length = 2000)
+    private String reversalReason;
     @Version
     @Column(nullable = false)
     private Long version;
@@ -70,6 +74,13 @@ public class SanctionReview {
         this.status = SanctionStatus.APPLIED;
     }
 
+    public void reverse(String reason) {
+        if (status != SanctionStatus.APPLIED) throw new IllegalStateException("Only an applied sanction can be reversed");
+        status = SanctionStatus.REVERSED;
+        reversalReason = reason;
+        reversedAt = Instant.now();
+    }
+
     public String getCaseId() { return caseId; }
     public String getAssignmentId() { return assignmentId; }
     public String getReportedPlayerId() { return reportedPlayerId; }
@@ -83,4 +94,6 @@ public class SanctionReview {
     public Instant getDecidedAt() { return decidedAt; }
     public Instant getActionedAt() { return actionedAt; }
     public Long getVersion() { return version; }
+    public Instant getReversedAt() { return reversedAt; }
+    public String getReversalReason() { return reversalReason; }
 }

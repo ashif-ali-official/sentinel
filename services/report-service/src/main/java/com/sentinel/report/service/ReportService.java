@@ -19,7 +19,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.awt.print.Pageable;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -104,14 +103,14 @@ public class ReportService {
                         .and(ReportSpecification.hasCategory(category))
                         .and(ReportSpecification.reportedPlayerIs(reportedPlayerId));
 
-        Pageable pageable = (Pageable) PageRequest.of(
+        org.springframework.data.domain.Pageable pageable = PageRequest.of(
                 page,
                 size,
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
         Page<Report> reports =
-                reportRepository.findAll(specification, (org.springframework.data.domain.Pageable) pageable);
+                reportRepository.findAll(specification, pageable);
 
         List<ReportResponse> content = reports.getContent()
                 .stream()

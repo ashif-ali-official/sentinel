@@ -38,6 +38,8 @@ sentinel:
     topics:
       moderation-decision-made: sentinel.moderation.decision-made
       sanction-applied: sentinel.sanction.applied
+      appeal-decided: sentinel.appeal.decided
+      sanction-reversed: sentinel.sanction.reversed
   outbox:
     publish-delay: 2000
     batch-size: 20

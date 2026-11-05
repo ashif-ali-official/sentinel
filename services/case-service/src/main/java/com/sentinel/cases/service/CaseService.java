@@ -102,7 +102,7 @@ public class CaseService {
                 performedBy
         );
 
-        return mapToCaseResponse(moderationCase);
+        return mapToCaseResponse(caseRepository.saveAndFlush(moderationCase));
     }
 
     @Transactional
@@ -120,13 +120,13 @@ public class CaseService {
 
         caseAuditService.record(
                 caseId,
-                "STATUS_CHANGED",
+                "PRIORITY_CHANGED",
                 oldPriority.name(),
                 newPriority.name(),
                 performedBy
         );
 
-        return mapToCaseResponse(moderationCase);
+        return mapToCaseResponse(caseRepository.saveAndFlush(moderationCase));
     }
 
     @Transactional(readOnly = true)
