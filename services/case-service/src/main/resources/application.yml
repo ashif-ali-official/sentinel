@@ -43,12 +43,23 @@ spring:
     listener:
       ack-mode: manual
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://cognito-idp.ap-south-2.amazonaws.com/ap-south-2_ubJidtLKC
+
 sentinel:
   kafka:
     topics:
       report-created: sentinel.report.created
       case-created: sentinel.case.created
       case-assigned: sentinel.case.assigned
+
+  security:
+    cognito:
+      issuer-uri: https://cognito-idp.ap-south-2.amazonaws.com/ap-south-2_ubJidtLKC
+      client-id: 54bk5r8of48un0ke77r2pk29i5
 
 management:
   endpoints:

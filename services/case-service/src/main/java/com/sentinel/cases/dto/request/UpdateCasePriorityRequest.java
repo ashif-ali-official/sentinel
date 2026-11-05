@@ -12,10 +12,7 @@ public record UpdateCasePriorityRequest(
 
         @NotNull
         @PositiveOrZero
-        Long version,
-
-        @NotBlank
-        String performedBy
+        Long version
 
 
 ) {
