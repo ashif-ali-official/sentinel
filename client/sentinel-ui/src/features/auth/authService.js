@@ -11,8 +11,8 @@ export async function getAuthenticatedUser() {
 export async function getAuthTokens() {
     const session = await fetchAuthSession();
     return {
-        accessToken: session.token?.accessToken?.toString(),
-        idToken: session.token?.idToken?.toString(),
+        accessToken: session.tokens?.accessToken?.toString(),
+        idToken: session.tokens?.idToken?.toString(),
     };
 }
 

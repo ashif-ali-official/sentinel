@@ -22,8 +22,6 @@ import {
 } from "recharts";
 
 import {
-  TrendingUp,
-  TrendingDown,
   FolderKanban,
   Clock,
   Activity,
@@ -31,47 +29,92 @@ import {
   ArrowUpRight,
   ShieldAlert,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { caseService } from "@/features/cases/caseService";
+import { auditService } from "@/features/audit/auditService";
+import { Button } from "@/components/ui/button";
 
-import {
-  dashboardStats,
-  casesByStatus,
-  casesBySeverity,
-  recentCases,
-  recentActivity,
-} from "./dashboardData";
+const statusColors = ["#3B82F6", "#8B5CF6", "#6366F1", "#10B981", "#64748B"];
+const statusNames = ["OPEN", "ASSIGNED", "UNDER_INVESTIGATION", "RESOLVED", "CLOSED"];
+const priorityNames = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
 
-const statusColors = ["#F59E0B", "#6366F1", "#10B981"];
+function formatDate(date) {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
+}
 
-function SeverityBadge({ severity }) {
+function summarizeCases(cases) {
+  const count = (predicate) => cases.filter(predicate).length;
+  return {
+    stats: [
+      { title: "Total Cases", value: cases.length },
+      { title: "Open Cases", value: count((item) => item.status === "OPEN") },
+      { title: "In Progress", value: count((item) => ["ASSIGNED", "UNDER_INVESTIGATION"].includes(item.status)) },
+      { title: "Resolved Cases", value: count((item) => ["RESOLVED", "CLOSED"].includes(item.status)) },
+    ],
+    byStatus: statusNames.map((name) => ({ name, value: count((item) => item.status === name) })),
+    byPriority: priorityNames.map((name) => ({ name, cases: count((item) => item.priority === name) })),
+    recent: [...cases].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
+  };
+}
+
+async function loadDashboardData() {
+  const cases = await caseService.getAllCases();
+  const latestCases = [...cases]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 10);
+  const auditResults = await Promise.allSettled(
+    latestCases.map((item) => auditService.getCaseAudit(item.caseId)),
+  );
+  const activities = auditResults
+    .flatMap((result) => result.status === "fulfilled" ? result.value : [])
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5);
+  return { cases, activities };
+}
+
+function PriorityBadge({ priority }) {
   const styles = {
-    Critical: "bg-red-100 text-red-700",
-    High: "bg-orange-100 text-orange-700",
-    Medium: "bg-yellow-100 text-yellow-700",
-    Low: "bg-slate-100 text-slate-700",
+    CRITICAL: "bg-red-100 text-red-700",
+    HIGH: "bg-orange-100 text-orange-700",
+    MEDIUM: "bg-yellow-100 text-yellow-700",
+    LOW: "bg-slate-100 text-slate-700",
   };
 
   return (
-    <Badge className={styles[severity]}>
-      {severity}
+      <Badge className={styles[priority]}>
+      {priority?.replaceAll("_", " ")}
     </Badge>
   );
 }
 
 function StatusBadge({ status }) {
   const styles = {
-    Pending: "bg-yellow-100 text-yellow-700",
-    "In Progress": "bg-indigo-100 text-indigo-700",
-    Resolved: "bg-green-100 text-green-700",
+    OPEN: "bg-blue-100 text-blue-700",
+    ASSIGNED: "bg-purple-100 text-purple-700",
+    UNDER_INVESTIGATION: "bg-indigo-100 text-indigo-700",
+    RESOLVED: "bg-green-100 text-green-700",
+    CLOSED: "bg-slate-100 text-slate-700",
   };
 
   return (
     <Badge className={styles[status]}>
-      {status}
+      {status?.replaceAll("_", " ")}
     </Badge>
   );
 }
 
 function Dashboard() {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["dashboard-cases"],
+    queryFn: loadDashboardData,
+  });
+  const cases = data?.cases || [];
+  const activities = data?.activities || [];
+  const { stats, byStatus, byPriority, recent } = summarizeCases(cases);
   const icons = [
     FolderKanban,
     Clock,
@@ -93,14 +136,12 @@ function Dashboard() {
           </p>
         </div>
 
-        <div className="text-sm text-slate-500">
-          Last updated: Nov 04, 2026
-        </div>
+        <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>Refresh</Button>
       </div>
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {dashboardStats.map((stat, index) => {
+        {stats.map((stat, index) => {
           const Icon = icons[index];
 
           return (
@@ -118,22 +159,12 @@ function Dashboard() {
 
                 <div className="mt-4">
                   <h2 className="text-3xl font-bold text-slate-900">
-                    {stat.value}
+                    {isLoading ? "…" : stat.value}
                   </h2>
 
                   <div className="mt-2 flex items-center gap-2 text-xs">
-                    {stat.trend === "up" ? (
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-green-600" />
-                    )}
-
-                    <span className="font-medium text-green-600">
-                      {stat.change}
-                    </span>
-
                     <span className="text-slate-400">
-                      {stat.description}
+                      Live count from case service
                     </span>
                   </div>
                 </div>
@@ -159,7 +190,7 @@ function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={casesByStatus}
+                    data={byStatus}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -168,7 +199,7 @@ function Dashboard() {
                     outerRadius={100}
                     paddingAngle={4}
                   >
-                    {casesByStatus.map((entry, index) => (
+                    {byStatus.map((entry, index) => (
                       <Cell
                         key={entry.name}
                         fill={statusColors[index]}
@@ -182,14 +213,14 @@ function Dashboard() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-5">
-              {casesByStatus.map((item, index) => (
+              {byStatus.map((item, index) => (
                 <div key={item.name} className="flex items-center gap-2">
                   <span
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: statusColors[index] }}
                   />
                   <span className="text-xs text-slate-500">
-                    {item.name}: {item.value}
+                    {item.name.replaceAll("_", " ")}: {item.value}
                   </span>
                 </div>
               ))}
@@ -201,7 +232,7 @@ function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Cases by Severity
+              Cases by Priority
             </CardTitle>
           </CardHeader>
 
@@ -209,7 +240,7 @@ function Dashboard() {
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={casesBySeverity}
+                  data={byPriority}
                   margin={{ top: 10, right: 10, left: -15, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -249,10 +280,10 @@ function Dashboard() {
             Recent Cases
           </CardTitle>
 
-          <button className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+          <Link to="/cases" className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800">
             View all
             <ArrowUpRight size={16} />
-          </button>
+          </Link>
         </CardHeader>
 
         <CardContent>
@@ -270,25 +301,25 @@ function Dashboard() {
               </thead>
 
               <tbody>
-                {recentCases.map((item) => (
+                {isLoading ? <tr><td colSpan="6" className="py-8 text-center text-slate-500">Loading cases…</td></tr> : isError ? <tr><td colSpan="6" className="py-8 text-center text-red-600">Could not load cases.</td></tr> : recent.length === 0 ? <tr><td colSpan="6" className="py-8 text-center text-slate-500">No cases found.</td></tr> : recent.map((item) => (
                   <tr
-                    key={item.id}
+                    key={item.caseId}
                     className="border-b last:border-0 hover:bg-slate-50"
                   >
                     <td className="py-4 font-medium text-indigo-600">
-                      {item.id}
+                      {item.caseId}
                     </td>
 
                     <td className="py-4 font-medium text-slate-800">
-                      {item.player}
+                      {item.reportedPlayerId}
                     </td>
 
                     <td className="py-4 text-slate-600">
-                      {item.category}
+                      {item.category?.replaceAll("_", " ")}
                     </td>
 
                     <td className="py-4">
-                      <SeverityBadge severity={item.severity} />
+                      <PriorityBadge priority={item.priority} />
                     </td>
 
                     <td className="py-4">
@@ -296,7 +327,7 @@ function Dashboard() {
                     </td>
 
                     <td className="py-4 whitespace-nowrap text-slate-500">
-                      {item.date}
+                      {formatDate(item.createdAt)}
                     </td>
                   </tr>
                 ))}
@@ -306,43 +337,33 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
+      {isError && <p role="alert" className="text-sm text-red-600">Could not load dashboard data: {error?.message}</p>}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldAlert size={18} className="text-indigo-600" />
-            Recent Moderator Activity
+            Recent Case Activity
           </CardTitle>
         </CardHeader>
-
         <CardContent>
-          <div className="space-y-5">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-                  {activity.moderator.charAt(0)}
+          {isLoading ? (
+            <p className="text-sm text-slate-500">Loading recent activity…</p>
+          ) : activities.length === 0 ? (
+            <p className="text-sm text-slate-500">No recent audit activity found.</p>
+          ) : (
+            <div className="space-y-4">
+              {activities.map((activity) => (
+                <div key={activity.auditId} className="flex items-start justify-between gap-4 border-b pb-4 last:border-0 last:pb-0">
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">{activity.action?.replaceAll("_", " ") || "Case updated"}</p>
+                    <p className="text-sm text-slate-500">{activity.caseId} · {activity.performedBy || "Unknown user"}</p>
+                  </div>
+                  <time className="whitespace-nowrap text-xs text-slate-400">{formatDate(activity.createdAt)}</time>
                 </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-800">
-                    {activity.moderator}
-                  </p>
-
-                  <p className="text-sm text-slate-500">
-                    {activity.action}
-                  </p>
-
-                  <p className="mt-1 text-xs text-indigo-600">
-                    {activity.reference}
-                  </p>
-                </div>
-
-                <span className="whitespace-nowrap text-xs text-slate-400">
-                  {activity.time}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

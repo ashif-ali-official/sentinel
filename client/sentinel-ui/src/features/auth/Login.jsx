@@ -17,6 +17,12 @@ import {
   getAuthTokens,
 } from "@/features/auth/authService";
 
+function getDashboardPath(role) {
+    if (role === "PLAYER") return "/player/dashboard";
+    if (role === "ADMIN" || role === "MODERATOR") return "/dashboard";
+    return "/unauthorized";
+}
+
 function Login() {
     const { refreshAuth } = useAuth();
     const navigate = useNavigate();
@@ -36,25 +42,25 @@ function Login() {
         try {
             // Check whether a user is already authenticated.
             try {
-            await getCurrentUser();
-            await refreshAuth();
-            // Existing authenticated session.
-            navigate("/dashboard", { replace: true });
-            return;
+                await getCurrentUser();
+                await refreshAuth();
+                // Existing authenticated session.
+                navigate(getDashboardPath(role), { replace: true });
+                return;
             } catch (error) {
             // No authenticated user. Continue with sign-in.
             }
 
             const result = await signIn({
-            username: email.trim(),
-            password,
+                username: email.trim(),
+                password,
             });
 
             if (result.isSignedIn) {
-            setPassword("");
-            await refreshAuth();
-            navigate("/dashboard", { replace: true });
-            return;
+                setPassword("");
+                await refreshAuth();
+                navigate(getDashboardPath(role), { replace: true });
+                return;
             }
 
             setMessage(

@@ -13,19 +13,19 @@ import AppLayout from "@/components/layout/AppLayout";
 import Dashboard from "@/features/dashboard/Dashboard";
 import Cases from "@/features/cases/Cases";
 import Players from "@/features/players/Players";
+import PlayerDashboard from "@/features/players/PlayerDashboard";
 import Audit from "@/features/audit/Audit";
 import Settings from "@/features/settings/Settings";
 import Login from "@/features/auth/Login";
+import ProtectedRoute from "@/features/auth/ProtectedRoute";
 
 function getDashboardPath(role) {
   switch (role) {
     case "ADMIN":
     case "MODERATOR":
       return "/dashboard";
-
     case "PLAYER":
       return "/player/dashboard";
-
     default:
       return "/unauthorized";
   }
@@ -65,7 +65,7 @@ function Unauthorized() {
       <div className="text-center">
         <h1 className="text-2xl font-bold">Access denied</h1>
         <p className="mt-2 text-slate-500">
-          Your account does not have an assigned Sentinel role.
+          Your account does not have permission to access this page.
         </p>
       </div>
     </div>
@@ -80,19 +80,39 @@ function AppRouter() {
         <Route path="/" element={<HomeRoute />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cases" element={<Cases />} />
-          <Route path="/players" element={<Players />} />
-          <Route path="/audit" element={<Audit />} />
-          <Route path="/settings" element={<Settings />} />
+        {/* Moderator portal */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={["MODERATOR", "ADMIN"]} />
+          }
+        >
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/cases" element={<Cases />} />
+            <Route path="/players" element={<Players />} />
+            <Route path="/audit" element={<Audit />} />
+          </Route>
         </Route>
 
-        {/* Player portal will be implemented separately */}
+        {/* Admin-only portal settings */}
+        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+          <Route element={<AppLayout />}>
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+        </Route>
+
+        {/* Player portal */}
         <Route
           path="/player/dashboard"
-          element={<div>Player Dashboard - Coming Soon</div>}
-        />
+          element={
+            <ProtectedRoute allowedRoles={["PLAYER"]} />
+          }
+        >
+          <Route
+            index
+            element={<PlayerDashboard />}
+          />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

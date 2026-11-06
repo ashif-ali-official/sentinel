@@ -50,18 +50,26 @@ export function AuthProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    })
+    }, []);
 
     useEffect(() => {
         refreshAuth();
     }, [refreshAuth]);
 
     const logout = async () => {
-        await signOut();
-
-        setUser(null);
-        setGroups([]);
-        setRole(null);
+        console.log("Logout started");
+        
+        try{
+            await signOut();
+            console.log("Cognito signOut started");
+            setUser(null);
+            setGroups([]);
+            setRole(null);
+            console.log("Auth state cleared");
+        } catch (error) {
+            console.error("Cognito signout fialed:", error);
+            throw error;
+        }
     };
 
     const value = {

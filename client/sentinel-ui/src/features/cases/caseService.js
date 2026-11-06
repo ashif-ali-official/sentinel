@@ -10,6 +10,19 @@ export const caseService = {
         return response.data;
     },
 
+    getAllCases: async () => {
+        const cases = [];
+        let page = 0;
+        let last = false;
+        while (!last) {
+            const response = await caseService.getCases({ page, size: 100 });
+            cases.push(...(response.content || []));
+            last = response.last ?? page + 1 >= response.totalPages;
+            page += 1;
+        }
+        return cases;
+    },
+
     getCaseById: async (caseId) => {
         const response = await apiClient.get(`/api/v1/cases/${caseId}`);
 
