@@ -29,6 +29,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf( csrf -> csrf.disable() )
                 .authorizeHttpRequests( auth -> auth
                         .requestMatchers("/actuator/health")
