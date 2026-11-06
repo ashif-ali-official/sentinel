@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.HttpHeaders;
 
 @Component
 @RequiredArgsConstructor
@@ -28,6 +29,15 @@ public class PlayerClient {
         } catch (HttpClientErrorException.NotFound e) {
             return false;
         }
+    }
+
+    public PlayerIdentityResponse getCurrentPlayer(String accessToken, String identityToken) {
+        return playerRestClient.get()
+                .uri("/api/v1/players/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header("X-Identity-Token", identityToken)
+                .retrieve()
+                .body(PlayerIdentityResponse.class);
     }
 
     public boolean playerExistsFallback(String playerId, Exception exception){

@@ -1,6 +1,7 @@
 package com.sentinel.report.service;
 
 import com.sentinel.report.client.PlayerClient;
+import com.sentinel.report.client.PlayerIdentityResponse;
 import com.sentinel.report.dto.request.CreateReportRequest;
 import com.sentinel.report.dto.response.PageResponse;
 import com.sentinel.report.dto.response.ReportResponse;
@@ -125,6 +126,38 @@ public class ReportService {
                 reports.getTotalPages(),
                 reports.isLast()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ReportResponse> getReportsForPlayer(String playerId, int page, int size) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        Page<Report> reports = reportRepository.findAll(
+                ReportSpecification.involvesPlayer(playerId), pageable);
+        return new PageResponse<>(
+                reports.getContent().stream().map(this::mapToReportResponse).toList(),
+                reports.getNumber(),
+                reports.getSize(),
+                reports.getTotalElements(),
+                reports.getTotalPages(),
+                reports.isLast()
+        );
+    }
+
+    public PageResponse<ReportResponse> getMyReports(
+            String accessToken,
+            String identityToken,
+            int page,
+            int size
+    ) {
+        PlayerIdentityResponse player = playerClient.getCurrentPlayer(accessToken, identityToken);
+        if (player == null || player.playerId() == null || player.playerId().isBlank()) {
+            throw new IllegalStateException("Player Service did not return the signed-in player");
+        }
+        return getReportsForPlayer(player.playerId(), page, size);
     }
 
     private ReportResponse mapToReportResponse(Report report) {

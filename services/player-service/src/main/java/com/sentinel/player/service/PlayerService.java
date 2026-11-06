@@ -55,6 +55,12 @@ public class PlayerService {
         return mapToPlayerResponse(player);
     }
 
+    public PlayerResponse getPlayerByEmail(String email) {
+        Player player = playerRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new PlayerNotFoundException("Player not found for signed-in email"));
+        return mapToPlayerResponse(player);
+    }
+
     public PageResponse<PlayerResponse> getPlayers(
             PlayerStatus status,
             int page,

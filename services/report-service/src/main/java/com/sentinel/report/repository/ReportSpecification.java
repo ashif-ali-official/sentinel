@@ -29,4 +29,12 @@ public class ReportSpecification {
                         );
     }
 
+    public static Specification<Report> involvesPlayer(String playerId) {
+        return (root, query, criteriaBuilder) -> playerId == null ? null
+                : criteriaBuilder.or(
+                        criteriaBuilder.equal(root.get("reporterId"), playerId),
+                        criteriaBuilder.equal(root.get("reportedPlayerId"), playerId)
+                );
+    }
+
 }

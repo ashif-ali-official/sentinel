@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -52,7 +53,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-Identity-Token"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -62,6 +63,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Primary
     public JwtDecoder jwtDecoder(CognitoProperties properties) {
         String issuer = properties.issuerUri();
         String clientId = properties.clientId();
@@ -92,6 +94,29 @@ public class SecurityConfig {
 
         return decoder;
 
+    }
+
+    @Bean("cognitoIdTokenDecoder")
+    public JwtDecoder cognitoIdTokenDecoder(CognitoProperties properties) {
+        String issuer = properties.issuerUri();
+        String clientId = properties.clientId();
+
+        NimbusJwtDecoder decoder = JwtDecoders.fromIssuerLocation(issuer);
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
+        OAuth2TokenValidator<Jwt> idTokenValidator = jwt -> {
+            if (!"id".equals(jwt.getClaimAsString("token_use"))) {
+                return OAuth2TokenValidatorResult.failure(
+                        new OAuth2Error("invalid_token", "Only ID tokens are accepted", null));
+            }
+            if (!jwt.getAudience().contains(clientId)) {
+                return OAuth2TokenValidatorResult.failure(
+                        new OAuth2Error("invalid_token", "Invalid Cognito app client", null));
+            }
+            return OAuth2TokenValidatorResult.success();
+        };
+
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withIssuer, idTokenValidator));
+        return decoder;
     }
 
     @Bean

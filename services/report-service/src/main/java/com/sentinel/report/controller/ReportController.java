@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +41,18 @@ public class ReportController {
     @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN', 'PLAYER')")
     public ReportResponse getReport( @PathVariable String reportId) {
         return reportService.getReportById(reportId);
+    }
+
+    @GetMapping("/me")
+    // Player Service validates the signed-in player's role and resolves their profile.
+    @PreAuthorize("isAuthenticated()")
+    public PageResponse<ReportResponse> getMyReports(
+            @AuthenticationPrincipal Jwt accessToken,
+            @RequestHeader("X-Identity-Token") String identityToken,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+    ) {
+        return reportService.getMyReports(accessToken.getTokenValue(), identityToken, page, size);
     }
 
     @GetMapping
