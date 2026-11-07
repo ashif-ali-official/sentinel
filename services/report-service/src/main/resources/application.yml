@@ -1,29 +1,29 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
     name: report-service
 
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3307/sentinel_report_db}
-    username: ${DB_USERNAME:sentinel}
-    password: ${DB_PASSWORD:rootAdmin}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   flyway:
     enabled: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -33,11 +33,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info, metrics, circuitbreakers
+        include: ${ACTUATOR_EXPOSED_ENDPOINTS:health}
 
   endpoint:
     health:
-      show-details: always
+      show-details: never
 
   health:
     circuitbreakers:
@@ -46,11 +46,13 @@ management:
 sentinel:
   security:
     cognito:
-      issuer-uri: ${COGNITO_ISSUER_URI:https://cognito-idp.ap-south-2.amazonaws.com/ap-south-2_ubJidtLKC}
-      client-id: ${COGNITO_CLIENT_ID:54bk5r8of48un0ke77r2pk29i5}
+      issuer-uri: ${COGNITO_ISSUER_URI}
+      client-id: ${COGNITO_CLIENT_ID}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
   services:
     player:
-      base-url: http://localhost:8084
+      base-url: ${PLAYER_SERVICE_URL}
 
 resilience4j:
   circuitbreaker:

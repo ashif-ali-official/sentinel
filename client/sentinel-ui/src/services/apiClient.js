@@ -1,7 +1,18 @@
 import axios from "axios";
 import { fetchAuthSession } from "aws-amplify/auth";
 
+function requiredServiceUrl(url, variableName) {
+  if (!url) {
+    throw new Error(`${variableName} must be set to the service URL.`);
+  }
+  return url;
+}
+
 export function createApiClient(baseURL, { includeIdentityToken = false } = {}) {
+  if (!baseURL) {
+    throw new Error("A VITE_*_SERVICE_URL value is required for each API client.");
+  }
+
   const client = axios.create({
     baseURL,
     headers: {
@@ -25,7 +36,7 @@ export function createApiClient(baseURL, { includeIdentityToken = false } = {}) 
 }
 
 const apiClient = createApiClient(
-  import.meta.env.VITE_CASE_SERVICE_URL || "http://localhost:8082",
+  requiredServiceUrl(import.meta.env.VITE_CASE_SERVICE_URL, "VITE_CASE_SERVICE_URL"),
 );
 
 export default apiClient;

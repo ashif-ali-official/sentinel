@@ -1,0 +1,26 @@
+server:
+  port: 8085
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3307/sentinel_assignment_db
+    username: sentinel
+    password: ${MYSQL_PASSWORD}
+  jpa:
+    show-sql: false
+  kafka:
+    bootstrap-servers: localhost:9092
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+sentinel:
+  security:
+    cognito:
+      issuer-uri: ${COGNITO_ISSUER_URI:https://cognito-idp.ap-south-2.amazonaws.com/ap-south-2_ubJidtLKC}
+      client-id: ${COGNITO_CLIENT_ID:54bk5r8of48un0ke77r2pk29i5}
+  cors:
+    allowed-origins: http://localhost:5173
+  services:
+    player:
+      base-url: http://localhost:8084

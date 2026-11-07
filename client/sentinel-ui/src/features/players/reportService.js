@@ -1,7 +1,7 @@
 import { createApiClient } from "@/services/apiClient";
 
 const apiClient = createApiClient(
-  import.meta.env.VITE_REPORT_SERVICE_URL || "http://localhost:8081",
+  import.meta.env.VITE_REPORT_SERVICE_URL,
   { includeIdentityToken: true },
 );
 

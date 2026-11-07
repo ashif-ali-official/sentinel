@@ -1,14 +1,14 @@
 server:
-  port: 8085
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
     name: assignment-service
 
   datasource:
-    url: jdbc:mysql://localhost:3307/sentinel_assignment_db
-    username: sentinel
-    password: rootAdmin
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -19,7 +19,7 @@ spring:
     enabled: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: sentinel-assignment-service
       auto-offset-reset: earliest
@@ -48,13 +48,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: ${ACTUATOR_EXPOSED_ENDPOINTS:health}
 
 sentinel:
   security:
     cognito:
-      issuer-uri: ${COGNITO_ISSUER_URI:https://cognito-idp.ap-south-2.amazonaws.com/ap-south-2_ubJidtLKC}
-      client-id: ${COGNITO_CLIENT_ID:54bk5r8of48un0ke77r2pk29i5}
+      issuer-uri: ${COGNITO_ISSUER_URI}
+      client-id: ${COGNITO_CLIENT_ID}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
   outbox:
     publish-delay: 2000
     batch-size: 20
@@ -62,4 +64,4 @@ sentinel:
 
   services:
     player:
-      base-url: http://localhost:8084
+      base-url: ${PLAYER_SERVICE_URL}
